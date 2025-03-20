@@ -1,0 +1,8 @@
+fastapi
+uvicorn
+neo4j
+neo4j-driver
+python-multipart
+cytoscape
+react-cytoscapejs 
+axios
