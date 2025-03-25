@@ -1,0 +1,6 @@
+start_id,end_id,relationship
+1,2,CONNECTS
+1,3,CONNECTS
+2,4,CONNECTS
+3,5,CONNECTS
+4,5,CONNECTS
