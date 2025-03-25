@@ -1,24 +1,31 @@
-import React, { useState,useEffect } from "react";
+import React, { useState } from "react";
 import CytoscapeComponent from "react-cytoscapejs";
+import cytoscape from "cytoscape";
+import fcose from "cytoscape-fcose";
 import axios from "axios";
+import './dashboard.css';
+
+// Register fcose layout
+cytoscape.use(fcose);
 
 const GraphQueryInterface = () => {
-  const [query, setQuery] = useState("MATCH (n)-[r]->(m) RETURN n, r, m");
   const [graphData, setGraphData] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [val,setVal] = useState(null);
-  const fetchGraphData = async () => {
+  const [showGraph, setShowGraph] = useState(false); 
+
+  const fetchGraphData = () => {
     setLoading(true);
-    setError(null);
-    try {
-      const response = await axios.post("http://localhost:8000/query", { cypher: query });
-      const formattedData = formatGraphData(response.data);
-      setGraphData(formattedData);
-    } catch (err) {
-      setError("Failed to fetch graph data");
-    }
-    setLoading(false);
+    axios.get("http://127.0.0.1:8000/get_data")
+      .then(response => {
+        const data = response.data || { nodes: [], edges: [] };
+        const formattedData = formatGraphData(data);
+        setGraphData(formattedData);
+        setShowGraph(true);
+      })
+      .catch(error => {
+        console.error("Error fetching graph data:", error);
+      })
+      .finally(() => setLoading(false));
   };
 
   const formatGraphData = (data) => {
@@ -31,25 +38,32 @@ const GraphQueryInterface = () => {
     data.edges.forEach((edge) => {
       elements.push({ data: { id: edge.id, source: edge.source, target: edge.target, label: edge.label } });
     });
-    
+
     return elements;
   };
-  
-  const testGraphData = [
-    { data: { id: "A", label: "Node A" } },
-    { data: { id: "B", label: "Node B" } },
-    { data: { id: "AB", source: "A", target: "B", label: "Edge AB" } }
-  ];
 
   return (
-    <div>
+    <div className="graph-wrapper">
       <h2>Graph Query Processor</h2>
-      <textarea value={query} onChange={(e) => setQuery(e.target.value)} rows="4" />
-      <button onClick={fetchGraphData} disabled={loading}>
-        {loading ? "Loading..." : "Run Query"}
+      
+      <button onClick={fetchGraphData} disabled={loading || showGraph}>
+        {loading ? "Loading..." : showGraph ? "Graph Loaded" : "Show Graph"}
       </button>
-      {error && <p style={{ color: "red" }}>{error}</p>}
-      <CytoscapeComponent elements={testGraphData} style={{ width: "800px", height: "500px" }} layout={{ name: "cose" }} />
+
+      {showGraph && (
+        <CytoscapeComponent
+          elements={graphData}
+          style={{ width: "800px", height: "500px", border: "1px solid black" }}
+          layout={{
+            name: "fcose",
+            nodeRepulsion: 10000,
+            idealEdgeLength: 120,
+            gravity: 0.05,
+            animate: true
+          }}
+          className="cy-container"
+        />
+      )}
     </div>
   );
 };

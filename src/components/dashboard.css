@@ -1,0 +1,6 @@
+.cy-container {
+    box-sizing: border-box;
+    width: 800px;
+    height: 500px;
+    overflow: hidden; 
+}
