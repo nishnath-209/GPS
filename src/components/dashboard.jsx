@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState,useEffect } from "react";
 import CytoscapeComponent from "react-cytoscapejs";
 import axios from "axios";
 
@@ -7,7 +7,7 @@ const GraphQueryInterface = () => {
   const [graphData, setGraphData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-
+  const [val,setVal] = useState(null);
   const fetchGraphData = async () => {
     setLoading(true);
     setError(null);
@@ -34,6 +34,12 @@ const GraphQueryInterface = () => {
     
     return elements;
   };
+  
+  const testGraphData = [
+    { data: { id: "A", label: "Node A" } },
+    { data: { id: "B", label: "Node B" } },
+    { data: { id: "AB", source: "A", target: "B", label: "Edge AB" } }
+  ];
 
   return (
     <div>
@@ -43,7 +49,7 @@ const GraphQueryInterface = () => {
         {loading ? "Loading..." : "Run Query"}
       </button>
       {error && <p style={{ color: "red" }}>{error}</p>}
-      <CytoscapeComponent elements={graphData} style={{ width: "800px", height: "500px" }} layout={{ name: "cose" }} />
+      <CytoscapeComponent elements={testGraphData} style={{ width: "800px", height: "500px" }} layout={{ name: "cose" }} />
     </div>
   );
 };

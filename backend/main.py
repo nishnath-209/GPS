@@ -54,6 +54,10 @@ async def run_query(request: QueryRequest):
 
         return {"nodes": list(nodes.values()), "edges": edges}
 
+@app.get("/temp")
+def run_temp():
+    return {"data_num":"9669"}
+
 @app.get("/")
 def read_root():
     return {"message": "Graph Query API is running!"}
