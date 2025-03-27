@@ -1,43 +1,96 @@
-/* #root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+.app-header {
+  display: flex;
+  justify-content: center;
+  background-color: #333;
+  padding: 10px;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
+.app-header button {
+  margin: 0 10px;
+  padding: 10px 20px;
+  color: white;
+  background-color: #555;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
 }
 
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+.app-header button:hover {
+  background-color: #777;
 }
 
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.app-content {
+  display: flex;
+  height: calc(100vh - 50px);
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
+.left-panel {
+  display: flex;
+  flex-direction: row;
+  width: 50%;
+  padding: 20px;
+  background-color: #f4f4f4;
+  border-right: 1px solid #ddd;
 }
 
-.card {
-  padding: 2em;
+.options-list {
+  width: 50%;
+  padding-right: 10px;
+  border-right: 1px solid #ccc;
 }
 
-.read-the-docs {
-  color: #888;
-} */
+.input-container {
+  width: 50%;
+  padding-left: 10px;
+}
+
+.left-panel ul {
+  list-style: none;
+  padding: 0;
+}
+
+.left-panel li {
+  margin: 10px 0;
+  cursor: pointer;
+  color: #007bff;
+}
+
+.left-panel li:hover {
+  text-decoration: underline;
+}
+
+.right-panel {
+  width: 50%;
+  padding: 20px;
+}
+
+.input-fields {
+  margin-top: 20px;
+}
+
+.input-fields label {
+  display: block;
+  margin-bottom: 10px;
+}
+
+.input-fields input {
+  width: 100%;
+  padding: 8px;
+  margin-top: 5px;
+  margin-bottom: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.input-fields button {
+  padding: 10px 20px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.input-fields button:hover {
+  background-color: #0056b3;
+}

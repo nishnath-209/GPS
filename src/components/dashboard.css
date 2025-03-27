@@ -1,6 +1,63 @@
-.cy-container {
-    box-sizing: border-box;
-    width: 800px;
-    height: 500px;
-    overflow: hidden; 
-}
+/* Graph Container Styles */
+.graph-container {
+    width: 100%;
+    height: 600px;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .graph-controls {
+    display: flex;
+    justify-content: flex-start;
+    padding: 10px;
+    background-color: #f4f4f4;
+    gap: 10px;
+  }
+  
+  .fetch-data-btn,
+  .reload-layout-btn {
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  
+  .fetch-data-btn:hover,
+  .reload-layout-btn:hover {
+    background-color: #45a049;
+  }
+  
+  .fetch-data-btn:disabled,
+  .reload-layout-btn:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+  }
+  
+  .cy-container {
+    flex-grow: 1;
+    /* width: 100%; */
+    height: calc(100% - 50px);
+    border: 1px solid #ddd;
+  }
+  
+  /* Cytoscape Specific Styles */
+  .cy-container .cy-node {
+    background-color: #666;
+    color: #fff;
+  }
+  
+  .cy-container .cy-edge {
+    line-color: #ccc;
+    target-arrow-color: #ccc;
+  }
+  
+  /* Responsive adjustments */
+  @media (max-width: 768px) {
+    .graph-container {
+      width: 100%;
+      height: 400px;
+    }
+  }

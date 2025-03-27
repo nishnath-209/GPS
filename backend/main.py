@@ -32,7 +32,6 @@ async def register_routes():
 @app.get("/get_data")
 async def get_graph_data():
     """Fetches a pre-defined set of nodes and edges from Neo4j."""
-    print("📢 GET /get_data API called")
     try:
         with driver.session() as session:
             # nodes_query = "MATCH (n:node) RETURN n LIMIT 25"
