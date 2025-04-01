@@ -35,7 +35,7 @@ async def get_graph_data():
     try:
         with driver.session() as session:
             # nodes_query = "MATCH (n:node) RETURN n LIMIT 25"
-            query = "MATCH (n)-[r]->(m) RETURN n, r, m LIMIT 10"
+            query = "MATCH (n)-[r]->(m) RETURN n, r, m"
             result = session.run(query)
             # nodes_result = session.run(nodes_query)
             # edges_query = "MATCH p=()-[:CONNECTS]->() RETURN p LIMIT 25"
@@ -49,13 +49,13 @@ async def get_graph_data():
                     node1 = record["n"]
                     node2 = record["m"]
                     relation = record["r"]
-                    print(result)
+                    # print(result)
                     # Add nodes
                     if node1.id not in nodes:
-                        nodes[node1.id] = {"id": node1.id, "label": node1.get("label")}
+                        nodes[node1.id] = {"id": node1.id, "label": node1.id}
 
                     if node2.id not in nodes:
-                        nodes[node2.id] = {"id": node2.id, "label": node2.get("label")}
+                        nodes[node2.id] = {"id": node2.id, "label": node2.id}
 
                     edge_id = f"{node1.id}-{relation.type}-{node2.id}"
 
@@ -69,8 +69,8 @@ async def get_graph_data():
                 except Exception as e:
                     print(" Error processing record:", e)
 
-        print("Nodes:", list(nodes.values()))
-        print("Edges:", edges)
+        # print("Nodes:", list(nodes.values()))
+        # print("Edges:", edges)
         return {"nodes": list(nodes.values()), "edges": edges}
 
     except Exception as e:
