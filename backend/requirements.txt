@@ -6,3 +6,4 @@ python-multipart
 cytoscape
 react-cytoscapejs 
 axios
+cytoscape-fcose
