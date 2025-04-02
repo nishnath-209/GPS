@@ -40,6 +40,7 @@
 }
 
 .input-container {
+  height: 50%;
   width: 50%;
   padding-left: 10px;
 }
@@ -93,4 +94,16 @@
 
 .input-fields button:hover {
   background-color: #0056b3;
+}
+
+.output-container {
+  height: 50%;
+  width: 50%;
+  margin-top: 20px;
+  padding: 10px;
+  background-color: #e9ecef;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 14px;
+  color: #333;
 }

@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Query
 from pydantic import BaseModel
 from neo4j import GraphDatabase
 from fastapi.middleware.cors import CORSMiddleware
@@ -31,52 +31,81 @@ async def register_routes():
 
 @app.get("/get_data")
 async def get_graph_data():
-    """Fetches a pre-defined set of nodes and edges from Neo4j."""
     try:
         with driver.session() as session:
-            # nodes_query = "MATCH (n:node) RETURN n LIMIT 25"
-            query = "MATCH (n)-[r]->(m) RETURN n, r, m"
-            result = session.run(query)
-            # nodes_result = session.run(nodes_query)
-            # edges_query = "MATCH p=()-[:CONNECTS]->() RETURN p LIMIT 25"
-            # edges_result = session.run( edges_query)
+            # Get all nodes first
+            nodes_query = "MATCH (n) RETURN n"
+            relationships_query = "MATCH (a)-[r]->(b) RETURN a, r, b"
+            
             nodes = {}
             edges = []
-
-            # for node in nodes{}
-            for record in result:
-                try:
-                    node1 = record["n"]
-                    node2 = record["m"]
-                    relation = record["r"]
-                    # print(result)
-                    # Add nodes
-                    if node1.id not in nodes:
-                        nodes[node1.id] = {"id": node1.id, "label": node1.id}
-
-                    if node2.id not in nodes:
-                        nodes[node2.id] = {"id": node2.id, "label": node2.id}
-
-                    edge_id = f"{node1.id}-{relation.type}-{node2.id}"
-
-                    # Add relationship
-                    edges.append({
-                        "id": edge_id,
-                        "source": node1.id,
-                        "target": node2.id,
-                        "label": relation.type,
-                    })
-                except Exception as e:
-                    print(" Error processing record:", e)
-
-        # print("Nodes:", list(nodes.values()))
-        # print("Edges:", edges)
-        return {"nodes": list(nodes.values()), "edges": edges}
-
+            
+            # Process nodes
+            nodes_result = session.run(nodes_query)
+            for record in nodes_result:
+                node = record["n"]
+                nodes[node.id] = {
+                    "id": str(node.id),  # Convert to string for consistency
+                    "num": node.get("num"),
+                    "labels": list(node.labels)
+                }
+            
+            # Process relationships
+            rels_result = session.run(relationships_query)
+            for record in rels_result:
+                rel = record["r"]
+                edges.append({
+                    "source": str(rel.start_node.id),
+                    "target": str(rel.end_node.id),
+                    "type": rel.type,
+                    "id": str(rel.id)
+                })
+            
+            return {
+                "nodes": list(nodes.values()),
+                "edges": edges
+            }
+    
     except Exception as e:
-        print("Error in /get_data:", e)
+        print("Error:", e)
         return {"error": str(e)}
-
+    
 @app.get("/")
 def read_root():
     return {"message": "Graph Query API is running!"}
+
+class InputData(BaseModel):
+    startNode: str = None
+    endNode: str = None
+    inputValue: str = None
+
+@app.get("/process_input")
+async def process_input(
+    type: str = Query(...), startNode: str = None, endNode: str = None, inputValue: str = None
+):
+    """Processes input data sent from the frontend."""
+    print(f"Received type: {type}, startNode: {startNode}, endNode: {endNode}, inputValue: {inputValue}")
+    try:
+        with driver.session() as session:
+            if type == "Find Shortest Distance" and startNode and endNode:
+                query = (
+                    f"MATCH path = allShortestPaths((n1)-[:CONNECTS*]->(n2)) "
+                    f"WHERE n1.num = {startNode} AND n2.num = {endNode} "
+                    f"RETURN path"
+                )
+                result = session.run(query)
+                paths = [record["path"] for record in result]
+                return {"message": f"Shortest path: {paths}"}
+
+            elif type == "Another Option" and inputValue:
+                query = f"MATCH (n) WHERE n.id = '{inputValue}' RETURN n"
+                result = session.run(query)
+                nodes = [record["n"] for record in result]
+                return {"message": f"Nodes matching input: {nodes}"}
+
+            else:
+                return {"message": "Invalid input or type."}
+
+    except Exception as e:
+        print("Error processing input:", e)
+        return {"message": f"Error: {str(e)}"}

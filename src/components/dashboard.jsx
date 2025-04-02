@@ -44,10 +44,10 @@ const GraphQueryInterface = () => {
       // Create and run new layout
       const newLayout = cyRef.current.layout({
         name: "fcose",
-        nodeRepulsion: 10000,
-        idealEdgeLength: 120,
+        nodeRepulsion: 45000,
+        idealEdgeLength: 100,
         nodeSeparation: 200,
-        gravity: 0.1,
+        gravity: 0.25,
         fit: true,
         animate: true,
         animationDuration: 500
@@ -70,7 +70,7 @@ const GraphQueryInterface = () => {
       elements.push({ 
         data: { 
           id: node.id || `node-${Math.random()}`, 
-          label: node.label || 'Unnamed Node'
+          label: node.num || 'Unnamed Node'
         } 
       });
     });
@@ -118,8 +118,8 @@ const GraphQueryInterface = () => {
           layout={{
             name: "fcose",
             nodeRepulsion: 10000,
-            idealEdgeLength: 120,
-            nodeSeparation: 200,
+            idealEdgeLength: 220,
+            nodeSeparation: 400,
             gravity: 0.1,
             fit: true,
             animate: true,
@@ -144,8 +144,8 @@ const GraphQueryInterface = () => {
                 'line-color': '#ccc',
                 'target-arrow-color': '#ccc',
                 'target-arrow-shape': 'triangle',
-                'curve-style': 'bezier',
-                'label': 'data(label)'
+                'curve-style': 'bezier'
+                // 'label': 'data(label)'
               }
             }
           ]}
