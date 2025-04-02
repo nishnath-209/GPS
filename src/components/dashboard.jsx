@@ -14,7 +14,7 @@ const GraphQueryInterface = ({ graphResponse }) => {
 
   const fetchGraphData = () => {
     axios
-      .get("http://127.0.0.1:8000/get_data")
+      .get("http://127.0.0.1:8000/get_data",{"dataType":"General"})
       .then((response) => {
         console.log("Fetched graph data:", response.data);
         const data = response.data || { nodes: [], edges: [] };

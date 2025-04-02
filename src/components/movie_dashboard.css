@@ -1,0 +1,129 @@
+.movie-dashboard-container {
+    width: 100%;
+    height: 600px;
+    display: flex;
+    flex-direction: column;
+}
+
+.movie-controls {
+  margin-bottom: 20px;
+  text-align: center;
+  display: flex;
+  justify-content: flex-start;
+  padding: 10px;
+  background-color: #f4f4f4;
+  gap: 10px;
+}
+
+.fetch-movie-data-btn {
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.fetch-movie-data-btn:hover {
+  background-color: #0056b3;
+  background-color: #45a049;
+}
+
+.fetch-movie-data-btn:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+}
+
+.reload-layout-btn {
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.reload-layout-btn:hover {
+  background-color: #45a049;
+}
+
+.reload-layout-btn:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+}
+
+.movie-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  justify-content: center;
+}
+
+.movie-card {
+  background-color: white;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 15px;
+  width: 300px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.movie-card h4 {
+  margin: 0 0 10px;
+  font-size: 20px;
+  color: #333;
+}
+
+.movie-card p {
+  margin: 5px 0;
+  font-size: 14px;
+  color: #555;
+}
+
+.movie-card h5 {
+  margin: 15px 0 5px;
+  font-size: 16px;
+  color: #007bff;
+}
+
+.movie-card ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.movie-card li {
+  font-size: 14px;
+  color: #333;
+  margin-bottom: 5px;
+}
+
+.movie-card li span {
+  color: #555;
+  font-style: italic;
+}
+
+.cy-container {
+  flex-grow: 1;
+  height: calc(100% - 50px);
+  border: 1px solid #ddd;
+}
+
+.cy-container .cy-node {
+  background-color: #666;
+  color: #fff;
+}
+
+.cy-container .cy-edge {
+  line-color: #ccc;
+  target-arrow-color: #ccc;
+}
+
+@media (max-width: 768px) {
+  .movie-dashboard-container {
+    width: 100%;
+    height: 400px;
+  }
+}

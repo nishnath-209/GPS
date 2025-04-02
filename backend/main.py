@@ -31,42 +31,61 @@ async def register_routes():
     print("✅ Registered Routes:", [route.path for route in app.routes])
 
 @app.get("/get_data")
-async def get_graph_data():
+async def get_graph_data(dataType: str = None):
     try:
         with driver.session() as session:
-            # Get all nodes first
-            nodes_query = "MATCH (n) RETURN n"
-            relationships_query = "MATCH (a)-[r]->(b) RETURN a, r, b"
-            
-            nodes = {}
-            edges = []
-            
-            # Process nodes
-            nodes_result = session.run(nodes_query)
-            for record in nodes_result:
-                node = record["n"]
-                nodes[node.id] = {
-                    "id": str(node.id),  # Convert to string for consistency
-                    "num": node.get("num"),
-                    "labels": list(node.labels)
+            if dataType == "Movie database":
+                # Fetch movie-related data
+                query = """
+                MATCH (m:Movie)<-[r]-(p:Person)
+                RETURN m.title AS movie, m.released AS released, m.tagline AS tagline, 
+                       collect({name: p.name, born: p.born, relationship: type(r), roles: r.roles}) AS people
+                """
+                result = session.run(query)
+                movies = [
+                    {
+                        "title": record["movie"],
+                        "released": record["released"],
+                        "tagline": record["tagline"],
+                        "people": record["people"]
+                    }
+                    for record in result
+                ]
+                return {"type": "Movie database", "movies": movies}
+            else:
+                # Fetch default graph data
+                nodes_query = "MATCH (n:node) RETURN n"
+                relationships_query = "MATCH (a:node)-[r]->(b:node) RETURN a, r, b"
+                
+                nodes = {}
+                edges = []
+                
+                # Process nodes
+                nodes_result = session.run(nodes_query)
+                for record in nodes_result:
+                    node = record["n"]
+                    nodes[node.id] = {
+                        "id": str(node.id),  # Convert to string for consistency
+                        "num": node.get("num"),
+                        "labels": list(node.labels)
+                    }
+                
+                # Process relationships
+                rels_result = session.run(relationships_query)
+                for record in rels_result:
+                    rel = record["r"]
+                    edges.append({
+                        "source": str(rel.start_node.id),
+                        "target": str(rel.end_node.id),
+                        "type": rel.type,
+                        "id": str(rel.id)
+                    })
+                
+                return {
+                    "type": "Graph data",
+                    "nodes": list(nodes.values()),
+                    "edges": edges
                 }
-            
-            # Process relationships
-            rels_result = session.run(relationships_query)
-            for record in rels_result:
-                rel = record["r"]
-                edges.append({
-                    "source": str(rel.start_node.id),
-                    "target": str(rel.end_node.id),
-                    "type": rel.type,
-                    "id": str(rel.id)
-                })
-            
-            return {
-                "nodes": list(nodes.values()),
-                "edges": edges
-            }
-    
     except Exception as e:
         print("Error:", e)
         return {"error": str(e)}
@@ -290,7 +309,7 @@ def find_all_shortest_paths(session, startNode, endNode):
 
         # Add path details to all_paths
         all_paths.append({
-            "index": index,  # Add a unique index for each path
+            "index": index,  
             "distance": distance,
             "nodes": nodes,
             "edges": edges
@@ -304,7 +323,7 @@ def find_all_shortest_paths(session, startNode, endNode):
         "data": {
             "paths": all_paths,
             "combined": {
-                "nodes": list(combined_nodes.values()),  # Convert dictionary back to list
+                "nodes": list(combined_nodes.values()), 
                 "edges": combined_edges
             }
         },

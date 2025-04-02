@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import axios from "axios";
 import "./App.css";
 import GraphQueryInterface from "./components/dashboard";
+import MovieDashboard from "./components/movie_dashboard";
 
 function App() {
   const [selectedPage, setSelectedPage] = useState("General");
@@ -70,7 +71,7 @@ function App() {
           selectedOption === "Common Neighbors"
         ) {
           setGraphResponse(response.data.data);
-        } else if(selectedOption === "All Shortest Paths" && response.data.data) {
+        } else if (selectedOption === "All Shortest Paths" && response.data.data) {
           setGraphResponse(response.data.data.combined);
         }
       })
@@ -158,6 +159,25 @@ function App() {
     }
   };
 
+  const renderMovieDatabaseOptions = () => {
+    return (
+      <div className="options-list">
+        <h2>Movie Database Options</h2>
+        <ul>
+          <li onClick={() => { setSelectedOption("Fetch All Movies"); setOutput(""); setProfileOutput(""); }}>
+            Fetch All Movies
+          </li>
+          <li onClick={() => { setSelectedOption("Fetch Movie Details"); setOutput(""); setProfileOutput(""); }}>
+            Fetch Movie Details
+          </li>
+          <li onClick={() => { setSelectedOption("Fetch People in Movies"); setOutput(""); setProfileOutput(""); }}>
+            Fetch People in Movies
+          </li>
+        </ul>
+      </div>
+    );
+  };
+
   return (
     <div className="App">
       <header className="app-header">
@@ -170,51 +190,65 @@ function App() {
         </button>
       </header>
       <div className="app-content">
-        <div className="left-panel">
-          <div className="options-list">
-            <h2>{selectedPage} Options</h2>
-            <ul>
-              <li onClick={() => { setSelectedOption("Find Shortest Distance"); setOutput(""); setProfileOutput(""); }}>
-                Find Shortest Distance
-              </li>
-              <li onClick={() => { setSelectedOption("Find no of Nodes"); setOutput("");setProfileOutput(""); }}>
-                Find no of Nodes
-              </li>
-              <li onClick={() => { setSelectedOption("Find Nodes connected from a node"); setOutput(""); setProfileOutput(""); }}>
-                Find Nodes connected from a node
-              </li>
-              <li onClick={() => { setSelectedOption("Find Nodes connected to a node"); setOutput(""); setProfileOutput("");}}>
-                Find Nodes connected to a node
-              </li>
-              <li onClick={() => { setSelectedOption("Common Neighbors"); setOutput("");setProfileOutput(""); }}>
-                Common Neighbors
-              </li>
-              <li onClick={() => { setSelectedOption("All Shortest Paths"); setOutput(""); setProfileOutput("");}}>
-                All Shortest Paths
-              </li>
-            </ul>
+        {selectedPage === "Movie database" ? (
+          <div className="left-panel">
+            {renderMovieDatabaseOptions()}
+            
           </div>
-          <div className="input-container">
-            {renderInputFields()}
-            {output && (
-              <div className="output-container">
-                <strong>Output:</strong>
-                <pre>{output}</pre> {/* Use <pre> to preserve newlines */}
-              </div>
-            )}
-            {profileOutput && (
-              <div className="profile-container">
-                <strong>Query Profile:</strong>
-                <pre>{profileOutput}</pre> {/* Display query profile */}
-              </div>
-            )}
+        ) : (
+          <div className="left-panel">
+            <div className="options-list">
+              <h2>{selectedPage} Options</h2>
+              <ul>
+                <li onClick={() => { setSelectedOption("Find Shortest Distance"); setOutput(""); setProfileOutput(""); }}>
+                  Find Shortest Distance
+                </li>
+                <li onClick={() => { setSelectedOption("Find no of Nodes"); setOutput(""); setProfileOutput(""); }}>
+                  Find no of Nodes
+                </li>
+                <li onClick={() => { setSelectedOption("Find Nodes connected from a node"); setOutput(""); setProfileOutput(""); }}>
+                  Find Nodes connected from a node
+                </li>
+                <li onClick={() => { setSelectedOption("Find Nodes connected to a node"); setOutput(""); setProfileOutput(""); }}>
+                  Find Nodes connected to a node
+                </li>
+                <li onClick={() => { setSelectedOption("Common Neighbors"); setOutput(""); setProfileOutput(""); }}>
+                  Common Neighbors
+                </li>
+                <li onClick={() => { setSelectedOption("All Shortest Paths"); setOutput(""); setProfileOutput(""); }}>
+                  All Shortest Paths
+                </li>
+              </ul>
+            </div>
+            <div className="input-container">
+              {renderInputFields()}
+              {output && (
+                <div className="output-container">
+                  <strong>Output:</strong>
+                  <pre>{output}</pre>
+                </div>
+              )}
+              {profileOutput && (
+                <div className="profile-container">
+                  <strong>Query Profile:</strong>
+                  <pre>{profileOutput}</pre>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
-        <div className="right-panel">
-          <GraphQueryInterface
-            graphResponse={graphResponse} // Pass the shortest path data
-          />
-        </div>
+        )}
+        {selectedPage === "General" ? (
+          <div className="right-panel">
+            <GraphQueryInterface
+              graphResponse={graphResponse}
+              dataType="General"
+            />
+          </div>
+          ) : 
+          <div className="right-panel">
+            <MovieDashboard />
+          </div>
+        } 
       </div>
     </div>
   );
