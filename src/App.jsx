@@ -103,8 +103,9 @@ function App() {
               {/* Add more options as needed */}
             </ul>
           </div>
-          <div className="input-container">{renderInputFields()}</div>
-          {output && <div className="output-container"><strong>Output:</strong> {output}</div>}
+          <div className="input-container">{renderInputFields()}
+            {output && <div className="output-container"><strong>Output:</strong> {output}</div>}
+          </div>
         </div>
         <div className="right-panel">
           <GraphQueryInterface />
