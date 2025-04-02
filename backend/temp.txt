@@ -1,0 +1,39 @@
+{
+  "Operator Type": "ProduceResults@neo4j",
+  "Rows": 491,
+  "DB Hits": 982,
+  "Page Cache Hits": 8,
+  "Page Cache Misses": 0,
+  "Details": "node, nodeCount",
+  "Estimated Rows": 22.15851980616034,
+  "Memory (Bytes)": 0,
+  "Children": [
+    {
+      "Operator Type": "EagerAggregation@neo4j",
+      "Rows": 491,
+      "DB Hits": 0,
+      "Page Cache Hits": 0,
+      "Page Cache Misses": 0,
+      "Details": "n AS node, count(n) AS nodeCount",
+      "Estimated Rows": 22.15851980616034,
+      "Memory (Bytes)": 59632,
+      "Children": [
+        {
+          "Operator Type": "AllNodesScan@neo4j",
+          "Rows": 491,
+          "DB Hits": 492,
+          "Page Cache Hits": 8,
+          "Page Cache Misses": 0,
+          "Details": "n",
+          "Estimated Rows": 491,
+          "Memory (Bytes)": 0,
+          "Children": []
+        }
+      ]
+    }
+  ],
+  "Global Memory": 59696,
+  "Total DB Hits": 982,
+  "Total Page Cache Hits": 8,
+  "Total Page Cache Misses": 0
+}

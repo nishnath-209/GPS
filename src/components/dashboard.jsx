@@ -7,10 +7,8 @@ import "./dashboard.css"
 // Register fcose layout
 cytoscape.use(fcose);
 
-const GraphQueryInterface = () => {
+const GraphQueryInterface = ({ graphResponse }) => {
   const [graphData, setGraphData] = useState([]);
-  
-  const [inputValue, setInputValue] = useState("");
   const cyRef = useRef(null);
   const layoutRef = useRef(null);
 
@@ -32,6 +30,56 @@ const GraphQueryInterface = () => {
         console.error("Error fetching graph data:", error);
       });
   };
+
+  React.useEffect(() => {
+    if (graphResponse && cyRef.current) {
+      const cy = cyRef.current;
+      // Reset previous highlights
+      cy.elements().removeClass("highlighted-path");
+
+      // Extract node/edge IDs from the graphResponse
+      const pathNodeIds = graphResponse.nodes?.map((node) => node.id) || [];
+      const pathEdgeSourcesTargets =
+        graphResponse.edges?.map((edge) => ({
+          source: edge.source,
+          target: edge.target,
+        })) || [];
+
+      // Highlight nodes and edges in the path
+      cy.elements().forEach((ele) => {
+        if (
+          (ele.isNode() && pathNodeIds.includes(ele.data("id"))) ||
+          (ele.isEdge() &&
+            pathEdgeSourcesTargets.some(
+              (e) =>
+                e.source === ele.data("source") &&
+                e.target === ele.data("target")
+            ))
+        ) {
+          ele.addClass("highlighted-path");
+        }
+      });
+
+      // Apply a separate layout to highlighted nodes
+      const highlightedNodes = cy.elements(".highlighted-path[node]");
+      if (highlightedNodes.length > 0) {
+        const highlightedLayout = highlightedNodes.layout({
+          name: "fcose",
+          nodeRepulsion: 100000, // Increase repulsion for more spacing
+          idealEdgeLength: 200,
+          nodeSeparation: 300,
+          gravity: 0.1,
+          fit: true,
+          animate: true,
+          animationDuration: 500,
+        });
+        highlightedLayout.run();
+      }
+
+      // Zoom to fit the highlighted path
+      cy.fit(cy.elements(".highlighted-path"), 100);
+    }
+  }, [graphResponse]);
 
   const reloadLayout = () => {
     console.log("Reloading layout. Current graph data:", graphData);
@@ -104,6 +152,13 @@ const GraphQueryInterface = () => {
         >
           Reload Layout
         </button>
+        {/* <button 
+          onClick={reloadLayout} 
+          className="reload-layout-btn" 
+          disabled={graphData.length === 0}
+        >
+          Reset 
+        </button> */}
         
       </div>
 
@@ -126,28 +181,29 @@ const GraphQueryInterface = () => {
           }}
           stylesheet={[
             {
-              selector: 'node',
+              selector: "node",
               style: {
-                'background-color': '#666',
-                'label': 'data(label)',
-                'color': '#fff',
-                'text-valign': 'center',
-                'text-halign': 'center',
-                'width': 50,
-                'height': 50
-              }
+                 "background-color": "#777",
+                  "label": "data(label)",
+                  'text-valign': 'center',
+                  'text-halign': 'center' 
+                }
             },
             {
-              selector: 'edge',
+              selector: "edge",
+              style: { "line-color": "#ccc" }
+            },
+            {
+              selector: ".highlighted-path",
               style: {
-                'width': 3,
-                'line-color': '#ccc',
-                'target-arrow-color': '#ccc',
-                'target-arrow-shape': 'triangle',
-                'curve-style': 'bezier'
-                // 'label': 'data(label)'
+                "background-color": "red", // Highlight nodes
+                "line-color": "red",      // Highlight edges
+                "target-arrow-color": "red",
+                // "width": 5,
+                // shape: "square" // Make nodes round
               }
             }
+  
           ]}
         />
       )}

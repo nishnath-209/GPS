@@ -34,7 +34,7 @@
 }
 
 .options-list {
-  width: 50%;
+  width: 45%;
   padding-right: 10px;
   border-right: 1px solid #ccc;
 }
@@ -43,7 +43,7 @@
   display: flex;
   flex-direction: column;
   /* height: 50%; */
-  width: 50%;
+  width: 55%;
   padding-left: 10px;
 }
 
@@ -99,8 +99,7 @@
 }
 
 .output-container {
-  /* height: 50%; */
-  /* width: 99%; */
+  text-align: left;
   margin-top: 20px;
   padding: 10px;
   background-color: #e9ecef;
@@ -108,4 +107,23 @@
   border-radius: 4px;
   font-size: 14px;
   color: #333;
+  overflow-wrap: break-word; 
+  word-wrap: break-word; 
+  overflow: auto; 
+   max-height: 200px; /*Optional: Limit the height of the container */
+}
+
+.profile-container {
+  text-align: left;
+  margin-top: 20px;
+  padding: 10px;
+  background-color: #f8f9fa; /* Light gray background */
+  border: 1px solid #ccc; /* Border for separation */
+  border-radius: 4px; /* Rounded corners */
+  font-size: 14px; /* Font size for readability */
+  color: #333; /* Text color */
+  overflow-wrap: break-word; /* Handle long words */
+  word-wrap: break-word; /* Handle long words */
+  overflow: auto; /* Enable scrolling for large content */
+  max-height: 200px; /* Limit the height of the container */
 }
