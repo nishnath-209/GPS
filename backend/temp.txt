@@ -1,89 +1,92 @@
-def fetch_all_movies(session):
-    """Fetch all movies with their details."""
-    query = """
-    MATCH (m:Movie)
-    RETURN m.title AS title, m.released AS released, m.tagline AS tagline
-    """
-    result = session.run(query)
-    movies = [
-        {
-            "title": record["title"],
-            "released": record["released"],
-            "tagline": record["tagline"]
-        }
-        for record in result
-    ]
-    return {"message": f"Fetched {len(movies)} movies.", "data": movies}
+const handleSubmit = () => {
+  let params = { type: selectedOption };
 
+  // Handle parameters based on the selected option
+  if (
+    selectedOption === "Find Shortest Distance" ||
+    selectedOption === "Common Neighbors" ||
+    selectedOption === "All Shortest Paths" ||
+    selectedOption === "Find Movies with Actor + Director Combo" ||
+    selectedOption === "Find Shortest Path Between Two Actors"
+  ) {
+    params.startNode = startNode;
+    params.endNode = endNode;
+  } else if (
+    selectedOption === "Find Nodes connected from a node" ||
+    selectedOption === "Find Nodes connected to a node" ||
+    selectedOption === "Fetch Movie Details" ||
+    selectedOption === "Fetch People in Movies" ||
+    selectedOption === "Find Co-actors" ||
+    selectedOption === "Find Sequels/Prequels of a Movie" ||
+    selectedOption === "Find Actors Who Debuted in a Specific Year"
+  ) {
+    params.inputValue = inputValue;
+  }
 
-def fetch_movie_details(session, movie_title):
-    """Fetch details of a specific movie."""
-    query = f"""
-    MATCH (m:Movie {{title: '{movie_title}'}})<-[r]-(p:Person)
-    RETURN m.title AS title, m.released AS released, m.tagline AS tagline,
-           collect({{name: p.name, born: p.born, relationship: type(r), roles: r.roles}}) AS people
-    """
-    result = session.run(query)
-    record = result.single()
-    if not record:
-        return {"message": f"No details found for movie '{movie_title}'."}
-    movie_details = {
-        "title": record["title"],
-        "released": record["released"],
-        "tagline": record["tagline"],
-        "people": record["people"]
-    }
-    return {"message": f"Details for movie '{movie_title}' fetched successfully.", "data": movie_details}
+  axios
+    .get("http://127.0.0.1:8000/process_input", { params })
+    .then((response) => {
+      console.log("Response from backend:", response.data);
+      let message = response.data.message;
 
+      // Handle output for each option
+      if (selectedOption === "Fetch All Movies" && response.data.data) {
+        message += `\nMovies:\n`;
+        response.data.data.forEach((movie) => {
+          message += `- ${movie.title} (Released: ${movie.released}, Tagline: ${movie.tagline})\n`;
+        });
+      } else if (selectedOption === "Fetch Movie Details" && response.data.data) {
+        const movie = response.data.data;
+        message += `\nMovie Details:\nTitle: ${movie.title}\nReleased: ${movie.released}\nTagline: ${movie.tagline}\nPeople:\n`;
+        movie.people.forEach((person) => {
+          message += `- ${person.name} (${person.born}) - ${person.relationship}`;
+          if (person.roles && person.roles.length > 0) {
+            message += ` [Roles: ${person.roles.join(", ")}]`;
+          }
+          message += "\n";
+        });
+      } else if (selectedOption === "Fetch People in Movies" && response.data.data) {
+        const person = response.data.data;
+        message += `\nPerson Details:\nName: ${person.name}\nBorn: ${person.born}\nMovies:\n`;
+        person.movies.forEach((movie) => {
+          message += `- ${movie.title} (Released: ${movie.released}, Relationship: ${movie.relationship}`;
+          if (movie.roles && movie.roles.length > 0) {
+            message += `, Roles: ${movie.roles.join(", ")}`;
+          }
+          message += ")\n";
+        });
+      } else if (selectedOption === "Find Co-actors" && response.data.data) {
+        message += `\nCo-actors:\n${response.data.data.join(", ")}`;
+      } else if (selectedOption === "Find Frequent Collaborators" && response.data.data) {
+        message += `\nFrequent Collaborators:\n`;
+        response.data.data.forEach((collab) => {
+          message += `- Actor: ${collab.actor}, Director: ${collab.director}, Collaborations: ${collab.collaborations}\n`;
+        });
+      } else if (selectedOption === "Find Actors Who Haven’t Worked Together" && response.data.data) {
+        message += `\nActors Who Haven’t Worked Together:\n`;
+        response.data.data.forEach((pair) => {
+          message += `- ${pair.actor1} and ${pair.actor2}\n`;
+        });
+      } else if (selectedOption === "Find Actors Who Debuted in a Specific Year" && response.data.data) {
+        message += `\nActors Who Debuted in ${inputValue}:\n${response.data.data.join(", ")}`;
+      } else if (selectedOption === "Find Most Connected Movie" && response.data.data) {
+        message += `\nMost Connected Movie:\n${response.data.data.movie} with ${response.data.data.connections} connections.`;
+      } else if (selectedOption === "Find Sequels/Prequels of a Movie" && response.data.data) {
+        message += `\nSequels/Prequels:\n`;
+        response.data.data.forEach((related) => {
+          message += `- ${related.relatedMovie} (${related.relationship})\n`;
+        });
+      } else if (selectedOption === "Find Movies with Actor + Director Combo" && response.data.data) {
+        message += `\nMovies with Actor '${startNode}' and Director '${endNode}':\n${response.data.data.join(", ")}`;
+      } else if (selectedOption === "Find Shortest Path Between Two Actors" && response.data.data) {
+        message += `\nShortest Path:\nDistance: ${response.data.data.distance}\nPath: ${response.data.data.path}`;
+      }
 
-def fetch_people_in_movies(session, person_name):
-    """Fetch movies associated with a specific person."""
-    query = f"""
-    MATCH (p:Person {{name: '{person_name}'}})-[r]->(m:Movie)
-    RETURN p.name AS name, p.born AS born,
-           collect({{title: m.title, released: m.released, relationship: type(r), roles: r.roles}}) AS movies
-    """
-    result = session.run(query)
-    record = result.single()
-    if not record:
-        return {"message": f"No movies found for person '{person_name}'."}
-    person_details = {
-        "name": record["name"],
-        "born": record["born"],
-        "movies": record["movies"]
-    }
-    return {"message": f"Movies for person '{person_name}' fetched successfully.", "data": person_details}
-
-
-@app.get("/process_input")
-async def process_input(
-    type: str = Query(...), startNode: str = None, endNode: str = None, inputValue: str = None
-):
-    """Processes input data sent from the frontend."""
-    print(f"Received type: {type}, startNode: {startNode}, endNode: {endNode}, inputValue: {inputValue}")
-    try:
-        with driver.session() as session:
-            if type == "Fetch All Movies":
-                return fetch_all_movies(session)
-            elif type == "Fetch Movie Details" and inputValue:
-                return fetch_movie_details(session, inputValue)
-            elif type == "Fetch People in Movies" and inputValue:
-                return fetch_people_in_movies(session, inputValue)
-            elif type == "Find Shortest Distance" and startNode and endNode:
-                return find_shortest_distance(session, startNode, endNode)
-            elif type == "Find no of Nodes":
-                return find_no_of_nodes(session)
-            elif type == "Find Nodes connected from a node" and inputValue:
-                return find_connected_nodes_from(session, inputValue)
-            elif type == "Find Nodes connected to a node" and inputValue:
-                return find_connected_nodes_to(session, inputValue)
-            elif type == "Common Neighbors" and startNode and endNode:
-                return find_common_neighbors(session, startNode, endNode)
-            elif type == "All Shortest Paths" and startNode and endNode:
-                return find_all_shortest_paths(session, startNode, endNode)
-            else:
-                return {"message": f"Invalid input or type: {type}"}
-
-    except Exception as e:
-        print("Error processing input:", e)
-        return {"message": f"Error: {str(e)}"}
+      setOutput(message); // Set the response message
+      setProfileOutput(JSON.stringify(response.data.profile, null, 2)); // Set the query profile
+    })
+    .catch((error) => {
+      console.error("Error submitting data:", error);
+      setOutput("Failed to process the request.");
+    });
+};
