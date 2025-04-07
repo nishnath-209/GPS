@@ -857,28 +857,30 @@ def find_most_central_actor(session):
     }
 
 def find_clusters_of_actors(session):
-    """Find clusters or communities of actors based on collaboration patterns."""
+    """Find clusters of actors based on shared movie collaborations."""
     query = """
-    CALL algo.louvain.stream('Person', 'ACTED_IN', {})
-    YIELD nodeId, community
-    RETURN algo.asNode(nodeId).name AS actor, community
-    ORDER BY community
+    MATCH (a:Person)-[:ACTED_IN]->(m:Movie)<-[:ACTED_IN]-(b:Person)
+    WHERE a.name < b.name
+    WITH m.title AS movie, collect(DISTINCT a.name) + collect(DISTINCT b.name) AS actors
+    RETURN movie, actors
     """
     result, profile = execute_query_with_profile(session, query)
+
     clusters = {}
     for record in result:
-        community = record["community"]
-        actor = record["actor"]
-        if community not in clusters:
-            clusters[community] = []
-        clusters[community].append(actor)
+        movie = record["movie"]
+        actors = record["actors"]
+        clusters[movie] = list(set(actors))  # unique actors
+
     if not clusters:
         return {"message": "No clusters found.", "profile": profile}
+
     return {
         "message": "Clusters of actors fetched successfully.",
         "data": clusters,
         "profile": profile,
     }
+
 
 def find_isolated_nodes(session):
     """Find isolated nodes (actors or movies not connected to the rest of the graph)."""

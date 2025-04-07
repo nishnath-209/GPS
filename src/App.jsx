@@ -23,7 +23,7 @@ function App() {
       selectedOption === "All Shortest Paths" ||
       selectedOption === "Find Movies with Actor + Director Combo" ||
       selectedOption === "Find Shortest Path Between Two Actors" ||
-      selectedOption === "K-length Paths" ||
+      selectedOption === "K-length Paths"
     ) {
       params.startNode = startNode;
       params.endNode = endNode;
@@ -37,7 +37,8 @@ function App() {
       selectedOption === "Find Actors Who Debuted in a Specific Year" ||
       selectedOption === "Find Directors Who Worked with a Specific Actor" ||
       selectedOption === "Find All Movies Directed by a Person" ||
-      selectedOption === "Triangles Containing Node"
+      selectedOption === "Triangles Containing Node" ||
+      selectedOption === "Clustering Coefficient"
     ) {
       params.inputValue = inputValue;
     }
@@ -99,7 +100,7 @@ function App() {
               message += `\n${index + 1}. Node ${item.node}: ${item.score ? item.score.toFixed(4) : item.centrality.toFixed(4)}`;
             });
           }
-        } else if (selectedOption === "All Shortest Paths" && response.data.data) {
+        else if (selectedOption === "All Shortest Paths" && response.data.data) {
           message += `\nDistance : ${response.data.data.paths[0].distance}`;
           response.data.data.paths.forEach((path, index) => {
             const pathNodes = path.nodes.map((node) => node.num).join(" -> ");
@@ -112,6 +113,7 @@ function App() {
           });
         } else if (selectedOption === "Fetch Movie Details" && response.data.data) {
           const movie = response.data.data;
+          console.log("sdaa");
           message += `\nMovie Details:\nTitle: ${movie.title}\nReleased: ${movie.released}\nTagline: ${movie.tagline}\nPeople:\n`;
           movie.people.forEach((person) => {
             message += `- ${person.name} (${person.born}) - ${person.relationship}`;
@@ -205,6 +207,7 @@ function App() {
             message += `- ${node.name} (Labels: ${node.labels.join(", ")})\n`;
           });
         }
+      }
 
 
         setOutput(message); // Set the response message
