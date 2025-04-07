@@ -330,12 +330,241 @@ def find_all_shortest_paths(session, startNode, endNode):
         "profile": profile
     }
 
+# @app.get("/process_input")
+# async def process_input(
+#     type: str = Query(...), startNode: str = None, endNode: str = None, inputValue: str = None
+# ):
+#     """Processes input data sent from the frontend."""
+#     print(f"Received type: {type}, startNode: {startNode}, endNode: {endNode}, inputValue: {inputValue}")
+#     try:
+#         with driver.session() as session:
+#             if type == "Find Shortest Distance" and startNode and endNode:
+#                 return find_shortest_distance(session, startNode, endNode)
+#             elif type == "Find no of Nodes":
+#                 return find_no_of_nodes(session)
+#             elif type == "Find Nodes connected from a node" and inputValue:
+#                 return find_connected_nodes_from(session, inputValue)
+#             elif type == "Find Nodes connected to a node" and inputValue:
+#                 return find_connected_nodes_to(session, inputValue)
+#             elif type == "Common Neighbors" and startNode and endNode:
+#                 return find_common_neighbors(session, startNode, endNode)
+#             elif type == "All Shortest Paths" and startNode and endNode:
+#                 return find_all_shortest_paths(session,startNode,endNode)
+#             else:
+#                 return {"message": f"Invalid input or type: {type}"}
+
+#     except Exception as e:
+#         print("Error processing input:", e)
+#         return {"message": f"Error: {str(e)}"}
+
+
+def find_k_length_paths(session, startNode, endNode, k):
+    query = (
+        f"MATCH path=(n1)-[:CONNECTS*{k}]->(n2) "
+        f"WHERE n1.num = {startNode} AND n2.num = {endNode} "
+        f"RETURN nodes(path) AS pathNodes, relationships(path) AS pathEdges"
+    )
+    records, profile = execute_query_with_profile(session, query)
+    
+    paths = []
+    for record in records:
+        nodes = [
+            {
+                "id": str(node.id),
+                "num": node.get("num"),
+                "labels": list(node.labels)
+            }
+            for node in record["pathNodes"]
+        ]
+        edges = [
+            {
+                "source": str(rel.start_node.id),
+                "target": str(rel.end_node.id),
+                "type": rel.type,
+                "id": str(rel.id)
+            }
+            for rel in record["pathEdges"]
+        ]
+        paths.append({
+            "nodes": nodes,
+            "edges": edges,
+            "length": k
+        })
+    
+    return {
+        "message": f"Found {len(paths)} paths of length {k}",
+        "data": paths,
+        "profile": profile
+    }
+
+def count_triangles(session):
+    query = """
+    MATCH (a)-[:CONNECTS]->(b)-[:CONNECTS]->(c)-[:CONNECTS]->(a)
+    RETURN count(DISTINCT [a, b, c]) AS triangle_count
+    """
+    result, profile = execute_query_with_profile(session, query)
+    count = result[0]["triangle_count"] if result else 0
+    return {
+        "message": f"Total triangles in graph: {count}",
+        "data": {"count": count},
+        "profile": profile
+    }
+
+def find_node_triangles(session, node_id):
+    query = f"""
+    MATCH (a)-[:CONNECTS]->(b)-[:CONNECTS]->(c)-[:CONNECTS]->(a)
+    WHERE a.num = {node_id} OR b.num = {node_id} OR c.num = {node_id}
+    RETURN DISTINCT a.num AS a, b.num AS b, c.num AS c
+    """
+    result, profile = execute_query_with_profile(session, query)
+    triangles = [{"nodes": [record["a"], record["b"], record["c"]]} for record in result]
+    return {
+        "message": f"Found {len(triangles)} triangles containing node {node_id}",
+        "data": triangles,
+        "profile": profile
+    }
+
+def calculate_clustering_coefficient(session, node_id):
+    # Get triangles count
+    triangles_query = f"""
+    MATCH (a)-[:CONNECTS]->(b)-[:CONNECTS]->(c)-[:CONNECTS]->(a)
+    WHERE a.num = {node_id} OR b.num = {node_id} OR c.num = {node_id}
+    RETURN count(DISTINCT [a, b, c]) AS triangles
+    """
+    triangles_result = session.run(triangles_query)
+    triangles = triangles_result.single()["triangles"] if triangles_result else 0
+    
+    # Get degree
+    degree_query = f"MATCH (n)-[:CONNECTS]->(m) WHERE n.num = {node_id} RETURN count(m) AS degree"
+    degree_result = session.run(degree_query)
+    degree = degree_result.single()["degree"] if degree_result else 0
+    
+    # Calculate coefficient
+    if degree < 2:
+        coefficient = 0.0
+    else:
+        possible_triangles = degree * (degree - 1) / 2
+        coefficient = triangles / possible_triangles if possible_triangles > 0 else 0.0
+    
+    return {
+        "message": f"Clustering coefficient for node {node_id}",
+        "data": {
+            "node": node_id,
+            "triangles": triangles,
+            "degree": degree,
+            "coefficient": coefficient
+        }
+    }
+
+def detect_communities(session):
+    try:
+        session.run("MATCH (n) SET n.community = id(n)")
+        
+        for _ in range(5):
+            session.run("""
+            MATCH (n)-[:CONNECTS]-(neighbor)
+            WITH n, neighbor.community AS neighborCommunity, count(*) AS communityCount
+            ORDER BY communityCount DESC
+            WITH n, collect(neighborCommunity)[0] AS newCommunity
+            SET n.community = newCommunity
+            """)
+        
+        # Get results
+        result = session.run("""
+        MATCH (n)
+        RETURN n.community AS communityId, collect(n.num) AS nodes
+        ORDER BY size(nodes) DESC
+        LIMIT 10
+        """)
+        
+        communities = {}
+        for record in result:
+            communities[record["communityId"]] = record["nodes"]
+        
+        return {
+            "message": f"Found {len(communities)} communities",
+            "data": {
+                "top_communities": list(communities.items())[:10],
+                "all_communities": communities
+            }
+        }
+    except Exception as e:
+        return {"error": f"Community detection failed: {str(e)}"}
+
+
+def calculate_pagerank(session, iterations=20, damping_factor=0.85):
+    try:
+        session.run("MATCH (n) SET n.pagerank = 1.0")
+        
+        session.run("""
+        MATCH (n)
+        WITH n, size([(n)-[:CONNECTS]->(neighbor) | neighbor]) AS outDegree
+        SET n.outDegree = CASE WHEN outDegree > 0 THEN outDegree ELSE 1 END
+        """)
+        
+        for _ in range(iterations):
+            session.run("MATCH (n) SET n.next_pagerank = 0.0")
+            session.run("""
+            MATCH (source)-[:CONNECTS]->(target)
+            WITH target, source, source.pagerank/source.outDegree AS contribution
+            WITH target, sum(contribution) AS incoming
+            SET target.next_pagerank = (1 - $damping) + $damping * incoming
+            """, {"damping": damping_factor})
+            
+            session.run("""
+            MATCH (n)
+            WHERE n.next_pagerank = 0.0
+            SET n.next_pagerank = (1 - $damping)
+            """, {"damping": damping_factor})
+            
+            session.run("MATCH (n) SET n.pagerank = n.next_pagerank")
+        
+        session.run("MATCH (n) REMOVE n.outDegree, n.next_pagerank")
+        
+        result = session.run("""
+        MATCH (n)
+        RETURN n.num AS node, n.pagerank AS score
+        ORDER BY score DESC
+        LIMIT 10
+        """)
+        
+        rankings = [{"node": record["node"], "score": record["score"]} for record in result]
+        return {
+            "message": "Top 10 nodes by PageRank (Cypher implementation)",
+            "data": rankings
+        }
+    except Exception as e:
+        return {"error": f"PageRank calculation failed: {str(e)}"}
+
+def calculate_centrality(session):
+
+    try:
+        result = session.run("""
+        MATCH (n)-[r:CONNECTS]-()
+        WITH n, count(r) AS degree
+        RETURN n.num AS node, degree AS centrality
+        ORDER BY centrality DESC
+        LIMIT 10
+        """)
+        
+        centralities = [{"node": record["node"], "centrality": record["centrality"]} for record in result]
+        return {
+            "message": "Top 10 nodes by Degree Centrality",
+            "data": centralities
+        }
+    except Exception as e:
+        return {"error": f"Centrality calculation failed: {str(e)}"}
+
+
 @app.get("/process_input")
 async def process_input(
-    type: str = Query(...), startNode: str = None, endNode: str = None, inputValue: str = None
+    type: str = Query(...), 
+    startNode: str = None, 
+    endNode: str = None, 
+    inputValue: str = None,
+    k: int = None
 ):
-    """Processes input data sent from the frontend."""
-    print(f"Received type: {type}, startNode: {startNode}, endNode: {endNode}, inputValue: {inputValue}")
+    print(f"Received type: {type}, startNode: {startNode}, endNode: {endNode}, inputValue: {inputValue}, k: {k}")
     try:
         with driver.session() as session:
             if type == "Find Shortest Distance" and startNode and endNode:
@@ -349,10 +578,23 @@ async def process_input(
             elif type == "Common Neighbors" and startNode and endNode:
                 return find_common_neighbors(session, startNode, endNode)
             elif type == "All Shortest Paths" and startNode and endNode:
-                return find_all_shortest_paths(session,startNode,endNode)
+                return find_all_shortest_paths(session, startNode, endNode)
+            elif type == "K-length Paths" and startNode and endNode and k:
+                return find_k_length_paths(session, startNode, endNode, k)
+            elif type == "Triangle Count":
+                return count_triangles(session)
+            elif type == "Triangles Containing Node" and inputValue:
+                return find_node_triangles(session, inputValue)
+            elif type == "Clustering Coefficient" and inputValue:
+                return calculate_clustering_coefficient(session, inputValue)
+            elif type == "Community Detection":
+                return detect_communities(session)
+            elif type == "Page Rank":
+                return calculate_pagerank(session)
+            elif type == "Centrality":
+                return calculate_centrality(session)
             else:
                 return {"message": f"Invalid input or type: {type}"}
-
     except Exception as e:
         print("Error processing input:", e)
         return {"message": f"Error: {str(e)}"}
