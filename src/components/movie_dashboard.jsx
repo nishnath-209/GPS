@@ -3,7 +3,7 @@ import CytoscapeComponent from "react-cytoscapejs";
 import cytoscape from "cytoscape";
 import fcose from "cytoscape-fcose";
 import axios from "axios";
-// import "./movie_dashboard.css";
+import "./movie_dashboard.css";
 
 // Register fcose layout
 cytoscape.use(fcose);

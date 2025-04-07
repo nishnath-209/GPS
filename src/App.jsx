@@ -154,6 +154,7 @@ function App() {
             <button onClick={handleSubmit}>Submit</button>
           </div>
         );
+      
       default:
         return <p>Select an option to see input fields.</p>;
     }
@@ -178,6 +179,49 @@ function App() {
     );
   };
 
+  const renderMovieDatabaseInputFields = () => {
+    switch (selectedOption) {
+      case "Fetch All Movies":
+        return (
+          <div className="input-fields">
+            <button onClick={handleSubmit}>Fetch All Movies</button>
+          </div>
+        );
+      case "Fetch Movie Details":
+        return (
+          <div className="input-fields">
+            <label>
+              Movie Title:
+              <input
+                type="text"
+                placeholder="Enter movie title"
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+              />
+            </label>
+            <button onClick={handleSubmit}>Fetch Movie Details</button>
+          </div>
+        );
+      case "Fetch People in Movies":
+        return (
+          <div className="input-fields">
+            <label>
+              Person Name:
+              <input
+                type="text"
+                placeholder="Enter person name"
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+              />
+            </label>
+            <button onClick={handleSubmit}>Fetch People in Movies</button>
+          </div>
+        );
+      default:
+        return <p>Select an option to see input fields.</p>;
+    }
+  };
+  
   return (
     <div className="App">
       <header className="app-header">
@@ -193,7 +237,21 @@ function App() {
         {selectedPage === "Movie database" ? (
           <div className="left-panel">
             {renderMovieDatabaseOptions()}
-            
+            <div className="input-container">
+              {renderMovieDatabaseInputFields()}
+              {output && (
+                <div className="output-container">
+                  <strong>Output:</strong>
+                  <pre>{output}</pre>
+                </div>
+              )}
+              {profileOutput && (
+                <div className="profile-container">
+                  <strong>Query Profile:</strong>
+                  <pre>{profileOutput}</pre>
+                </div>
+              )}
+            </div>
           </div>
         ) : (
           <div className="left-panel">

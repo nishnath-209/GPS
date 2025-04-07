@@ -1,39 +1,131 @@
-{
-  "Operator Type": "ProduceResults@neo4j",
-  "Rows": 491,
-  "DB Hits": 982,
-  "Page Cache Hits": 8,
-  "Page Cache Misses": 0,
-  "Details": "node, nodeCount",
-  "Estimated Rows": 22.15851980616034,
-  "Memory (Bytes)": 0,
-  "Children": [
-    {
-      "Operator Type": "EagerAggregation@neo4j",
-      "Rows": 491,
-      "DB Hits": 0,
-      "Page Cache Hits": 0,
-      "Page Cache Misses": 0,
-      "Details": "n AS node, count(n) AS nodeCount",
-      "Estimated Rows": 22.15851980616034,
-      "Memory (Bytes)": 59632,
-      "Children": [
-        {
-          "Operator Type": "AllNodesScan@neo4j",
-          "Rows": 491,
-          "DB Hits": 492,
-          "Page Cache Hits": 8,
-          "Page Cache Misses": 0,
-          "Details": "n",
-          "Estimated Rows": 491,
-          "Memory (Bytes)": 0,
-          "Children": []
-        }
-      ]
-    }
-  ],
-  "Global Memory": 59696,
-  "Total DB Hits": 982,
-  "Total Page Cache Hits": 8,
-  "Total Page Cache Misses": 0
-}
+const renderMovieDatabaseInputFields = () => {
+  switch (selectedOption) {
+    case "Fetch All Movies":
+      return (
+        <div className="input-fields">
+          <button onClick={handleSubmit}>Fetch All Movies</button>
+        </div>
+      );
+    case "Fetch Movie Details":
+      return (
+        <div className="input-fields">
+          <label>
+            Movie Title:
+            <input
+              type="text"
+              placeholder="Enter movie title"
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+            />
+          </label>
+          <button onClick={handleSubmit}>Fetch Movie Details</button>
+        </div>
+      );
+    case "Fetch People in Movies":
+      return (
+        <div className="input-fields">
+          <label>
+            Person Name:
+            <input
+              type="text"
+              placeholder="Enter person name"
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+            />
+          </label>
+          <button onClick={handleSubmit}>Fetch People in Movies</button>
+        </div>
+      );
+    default:
+      return <p>Select an option to see input fields.</p>;
+  }
+};
+
+return (
+  <div className="App">
+    <header className="app-header">
+      <button onClick={() => setSelectedPage("General")}>General</button>
+      <button onClick={() => setSelectedPage("Movie database")}>
+        Movie database
+      </button>
+      <button onClick={() => setSelectedPage("Social Network")}>
+        Social Network
+      </button>
+    </header>
+    <div className="app-content">
+      {selectedPage === "Movie database" ? (
+        <div className="left-panel">
+          {renderMovieDatabaseOptions()}
+          <div className="input-container">
+            {renderMovieDatabaseInputFields()}
+            {output && (
+              <div className="output-container">
+                <strong>Output:</strong>
+                <pre>{output}</pre>
+              </div>
+            )}
+            {profileOutput && (
+              <div className="profile-container">
+                <strong>Query Profile:</strong>
+                <pre>{profileOutput}</pre>
+              </div>
+            )}
+          </div>
+        </div>
+      ) : (
+        <div className="left-panel">
+          <div className="options-list">
+            <h2>{selectedPage} Options</h2>
+            <ul>
+              <li onClick={() => { setSelectedOption("Find Shortest Distance"); setOutput(""); setProfileOutput(""); }}>
+                Find Shortest Distance
+              </li>
+              <li onClick={() => { setSelectedOption("Find no of Nodes"); setOutput(""); setProfileOutput(""); }}>
+                Find no of Nodes
+              </li>
+              <li onClick={() => { setSelectedOption("Find Nodes connected from a node"); setOutput(""); setProfileOutput(""); }}>
+                Find Nodes connected from a node
+              </li>
+              <li onClick={() => { setSelectedOption("Find Nodes connected to a node"); setOutput(""); setProfileOutput(""); }}>
+                Find Nodes connected to a node
+              </li>
+              <li onClick={() => { setSelectedOption("Common Neighbors"); setOutput(""); setProfileOutput(""); }}>
+                Common Neighbors
+              </li>
+              <li onClick={() => { setSelectedOption("All Shortest Paths"); setOutput(""); setProfileOutput(""); }}>
+                All Shortest Paths
+              </li>
+            </ul>
+          </div>
+          <div className="input-container">
+            {renderInputFields()}
+            {output && (
+              <div className="output-container">
+                <strong>Output:</strong>
+                <pre>{output}</pre>
+              </div>
+            )}
+            {profileOutput && (
+              <div className="profile-container">
+                <strong>Query Profile:</strong>
+                <pre>{profileOutput}</pre>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+      {selectedPage === "General" ? (
+        <div className="right-panel">
+          <GraphQueryInterface
+            graphResponse={graphResponse}
+            dataType="General"
+          />
+        </div>
+      ) : (
+        <div className="right-panel">
+          <MovieDashboard />
+        </div>
+      )}
+    </div>
+  </div>
+);
