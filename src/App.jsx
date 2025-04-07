@@ -25,7 +25,9 @@ function App() {
       params.endNode = endNode;
     } else if (
       selectedOption === "Find Nodes connected from a node" ||
-      selectedOption === "Find Nodes connected to a node"
+      selectedOption === "Find Nodes connected to a node"   ||
+      selectedOption === "Fetch Movie Details" ||
+      selectedOption === "Fetch People in Movies"
     ) {
       params.inputValue = inputValue;
     }
@@ -54,6 +56,31 @@ function App() {
           response.data.data.paths.forEach((path, index) => {
             const pathNodes = path.nodes.map((node) => node.num).join(" -> ");
             message += `\nPath ${index + 1}: ${pathNodes}`;
+          });
+        } else if (selectedOption === "Fetch All Movies" && response.data.data) {
+          message += `\nMovies:\n`;
+          response.data.data.forEach((movie) => {
+            message += `- ${movie.title} (Released: ${movie.released}, Tagline: ${movie.tagline})\n`;
+          });
+        } else if (selectedOption === "Fetch Movie Details" && response.data.data) {
+          const movie = response.data.data;
+          message += `\nMovie Details:\nTitle: ${movie.title}\nReleased: ${movie.released}\nTagline: ${movie.tagline}\nPeople:\n`;
+          movie.people.forEach((person) => {
+            message += `- ${person.name} (${person.born}) - ${person.relationship}`;
+            if (person.roles && person.roles.length > 0) {
+              message += ` [Roles: ${person.roles.join(", ")}]`;
+            }
+            message += "\n";
+          });
+        } else if (selectedOption === "Fetch People in Movies" && response.data.data) {
+          const person = response.data.data;
+          message += `\nPerson Details:\nName: ${person.name}\nBorn: ${person.born}\nMovies:\n`;
+          person.movies.forEach((movie) => {
+            message += `- ${movie.title} (Released: ${movie.released}, Relationship: ${movie.relationship}`;
+            if (movie.roles && movie.roles.length > 0) {
+              message += `, Roles: ${movie.roles.join(", ")}`;
+            }
+            message += ")\n";
           });
         }
 

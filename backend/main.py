@@ -330,6 +330,62 @@ def find_all_shortest_paths(session, startNode, endNode):
         "profile": profile
     }
 
+def fetch_all_movies(session):
+    """Fetch all movies with their details."""
+    query = """
+    MATCH (m:Movie)
+    RETURN m.title AS title, m.released AS released, m.tagline AS tagline
+    """
+    result, profile = execute_query_with_profile(session, query)
+    movies = [
+        {
+            "title": record["title"],
+            "released": record["released"],
+            "tagline": record["tagline"]
+        }
+        for record in result
+    ]
+    return {"message": f"Fetched {len(movies)} movies.", "data": movies,"profile":profile }
+
+
+def fetch_movie_details(session, movie_title):
+    """Fetch details of a specific movie."""
+    query = f"""
+    MATCH (m:Movie {{title: '{movie_title}'}})<-[r]-(p:Person)
+    RETURN m.title AS title, m.released AS released, m.tagline AS tagline,
+           collect({{name: p.name, born: p.born, relationship: type(r), roles: r.roles}}) AS people
+    """
+    result, profile = execute_query_with_profile(session, query)
+    record = result.single()
+    if not record:
+        return {"message": f"No details found for movie '{movie_title}'."}
+    movie_details = {
+        "title": record["title"],
+        "released": record["released"],
+        "tagline": record["tagline"],
+        "people": record["people"]
+    }
+    return {"message": f"Details for movie '{movie_title}' fetched successfully.", "data": movie_details,"profile":profile}
+
+
+def fetch_people_in_movies(session, person_name):
+    """Fetch movies associated with a specific person."""
+    query = f"""
+    MATCH (p:Person {{name: '{person_name}'}})-[r]->(m:Movie)
+    RETURN p.name AS name, p.born AS born,
+           collect({{title: m.title, released: m.released, relationship: type(r), roles: r.roles}}) AS movies
+    """
+    result, profile = execute_query_with_profile(session, query)
+    record = result.single()
+    if not record:
+        return {"message": f"No movies found for person '{person_name}'."}
+    person_details = {
+        "name": record["name"],
+        "born": record["born"],
+        "movies": record["movies"]
+    }
+    return {"message": f"Movies for person '{person_name}' fetched successfully.", "data": person_details,"profile":profile}
+
 @app.get("/process_input")
 async def process_input(
     type: str = Query(...), startNode: str = None, endNode: str = None, inputValue: str = None
@@ -338,7 +394,13 @@ async def process_input(
     print(f"Received type: {type}, startNode: {startNode}, endNode: {endNode}, inputValue: {inputValue}")
     try:
         with driver.session() as session:
-            if type == "Find Shortest Distance" and startNode and endNode:
+            if type == "Fetch All Movies":
+                return fetch_all_movies(session)
+            elif type == "Fetch Movie Details" and inputValue:
+                return fetch_movie_details(session, inputValue)
+            elif type == "Fetch People in Movies" and inputValue:
+                return fetch_people_in_movies(session, inputValue)
+            elif type == "Find Shortest Distance" and startNode and endNode:
                 return find_shortest_distance(session, startNode, endNode)
             elif type == "Find no of Nodes":
                 return find_no_of_nodes(session)
