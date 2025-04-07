@@ -181,8 +181,9 @@ def find_shortest_distance(session, startNode, endNode):
     return {"message": "Shortest distance found.", "data": paths[0], "profile": profile}
 
 def find_no_of_nodes(session):
-    query = "MATCH (n) RETURN n AS node, count(n) AS nodeCount"
+    query = "MATCH (n:node) RETURN n AS node, count(n) AS nodeCount"
     result, profile = execute_query_with_profile(session, query)
+    print("result",result)
     nodes = [
         {
             "id": str(record["node"].id),
@@ -661,7 +662,19 @@ async def process_input(
     print(f"Received type: {type}, startNode: {startNode}, endNode: {endNode}, inputValue: {inputValue}")
     try:
         with driver.session() as session:
-            if type == "Fetch All Movies":
+            if type == "Find Shortest Distance" and startNode and endNode:
+                return find_shortest_distance(session, startNode, endNode)
+            elif type == "Find Nodes connected from a node" and inputValue:
+                return find_connected_nodes_from(session, inputValue)
+            elif type == "Find Nodes connected to a node" and inputValue:
+                return find_connected_nodes_to(session, inputValue)
+            elif type == "Common Neighbors" and startNode and endNode:
+                return find_common_neighbors(session, startNode, endNode)
+            elif type == "Find no of Nodes":
+                return find_no_of_nodes(session)
+            elif type == "Find All Shortest Paths" and startNode and endNode:
+                return find_all_shortest_paths(session, startNode, endNode)
+            elif type == "Fetch All Movies":
                 return fetch_all_movies(session)
             elif type == "Fetch Movie Details" and inputValue:
                 return fetch_movie_details(session, inputValue)
