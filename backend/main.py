@@ -37,7 +37,7 @@ async def get_graph_data(dataType: str = None):
             if dataType == "Movie database":
                 # Fetch movie-related data
                 query = """
-                MATCH (m:Movie)<-[r]-(p:Person)
+                MATCH (m:Movie)-[r]-(p:Person)
                 RETURN m.title AS movie, m.released AS released, m.tagline AS tagline, 
                        collect({name: p.name, born: p.born, relationship: type(r), roles: r.roles}) AS people
                 """
@@ -347,7 +347,6 @@ def fetch_all_movies(session):
     ]
     return {"message": f"Fetched {len(movies)} movies.", "data": movies,"profile":profile }
 
-
 def fetch_movie_details(session, movie_title):
     """Fetch details of a specific movie."""
     query = f"""
@@ -356,8 +355,9 @@ def fetch_movie_details(session, movie_title):
            collect({{name: p.name, born: p.born, relationship: type(r), roles: r.roles}}) AS people
     """
     result, profile = execute_query_with_profile(session, query)
-    record = result.single()
-    if not record:
+    records = list(result)
+    record = records[0]
+    if not records:
         return {"message": f"No details found for movie '{movie_title}'."}
     movie_details = {
         "title": record["title"],
@@ -376,8 +376,9 @@ def fetch_people_in_movies(session, person_name):
            collect({{title: m.title, released: m.released, relationship: type(r), roles: r.roles}}) AS movies
     """
     result, profile = execute_query_with_profile(session, query)
-    record = result.single()
-    if not record:
+    records = list(result)
+    record = records[0]
+    if not records:
         return {"message": f"No movies found for person '{person_name}'."}
     person_details = {
         "name": record["name"],
