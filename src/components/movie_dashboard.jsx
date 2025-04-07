@@ -3,7 +3,7 @@ import CytoscapeComponent from "react-cytoscapejs";
 import cytoscape from "cytoscape";
 import fcose from "cytoscape-fcose";
 import axios from "axios";
-// import "./movie_dashboard.css";
+import "./movie_dashboard.css";
 
 // Register fcose layout
 cytoscape.use(fcose);
@@ -18,6 +18,7 @@ const MovieDashboard = () => {
       .get("http://127.0.0.1:8000/get_data", { params: { dataType: "Movie database" } })
       .then((response) => {
         console.log("Fetched movie data:", response.data);
+        console.log(response.data.people);
         const movies = response.data.movies || [];
         const formattedData = formatGraphData(movies);
         setGraphData(formattedData);
@@ -55,10 +56,10 @@ const MovieDashboard = () => {
             type: "person",
           },
         });
-
+        if(person.name)
         elements.push({
           data: {
-            id: `${person.name}-${movie.title}`,
+            id: `${person.name}-${movie.title}-${person.relationship}`,
             source: person.name,
             target: movie.title,
             label: person.relationship,
@@ -67,7 +68,7 @@ const MovieDashboard = () => {
       });
     });
 
-    console.log("Formatted elements:", elements);
+    // console.log("Formatted elements:", elements);
     return elements;
   };
 
@@ -152,6 +153,10 @@ const MovieDashboard = () => {
                 "text-background-color": "#fff",
                 "text-background-opacity": 1,
                 "text-background-padding": "2px",
+                "curve-style": "bezier", // Use curved edges
+                "control-point-distance": 20, // Adjust curvature
+                "control-point-weight": 0.5, // Adjust curvature weight
+              
               },
             },
           ]}

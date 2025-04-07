@@ -1,39 +1,146 @@
-{
-  "Operator Type": "ProduceResults@neo4j",
-  "Rows": 491,
-  "DB Hits": 982,
-  "Page Cache Hits": 8,
-  "Page Cache Misses": 0,
-  "Details": "node, nodeCount",
-  "Estimated Rows": 22.15851980616034,
-  "Memory (Bytes)": 0,
-  "Children": [
-    {
-      "Operator Type": "EagerAggregation@neo4j",
-      "Rows": 491,
-      "DB Hits": 0,
-      "Page Cache Hits": 0,
-      "Page Cache Misses": 0,
-      "Details": "n AS node, count(n) AS nodeCount",
-      "Estimated Rows": 22.15851980616034,
-      "Memory (Bytes)": 59632,
-      "Children": [
-        {
-          "Operator Type": "AllNodesScan@neo4j",
-          "Rows": 491,
-          "DB Hits": 492,
-          "Page Cache Hits": 8,
-          "Page Cache Misses": 0,
-          "Details": "n",
-          "Estimated Rows": 491,
-          "Memory (Bytes)": 0,
-          "Children": []
+const handleSubmit = () => {
+  let params = { type: selectedOption };
+
+  // Handle parameters based on the selected option
+  if (
+    selectedOption === "Find Shortest Distance" ||
+    selectedOption === "Common Neighbors" ||
+    selectedOption === "All Shortest Paths" ||
+    selectedOption === "Find Movies with Actor + Director Combo" ||
+    selectedOption === "Find Shortest Path Between Two Actors"
+  ) {
+    params.startNode = startNode;
+    params.endNode = endNode;
+  } else if (
+    selectedOption === "Find Nodes connected from a node" ||
+    selectedOption === "Find Nodes connected to a node" ||
+    selectedOption === "Fetch Movie Details" ||
+    selectedOption === "Fetch People in Movies" ||
+    selectedOption === "Find Co-actors" ||
+    selectedOption === "Find Sequels/Prequels of a Movie" ||
+    selectedOption === "Find Actors Who Debuted in a Specific Year" ||
+    selectedOption === "Find Directors Who Worked with a Specific Actor" ||
+    selectedOption === "Find All Movies Directed by a Person"
+  ) {
+    params.inputValue = inputValue;
+  }
+
+  axios
+    .get("http://127.0.0.1:8000/process_input", { params })
+    .then((response) => {
+      console.log("Response from backend:", response.data);
+      let message = response.data.message;
+
+      // Handle output for each option
+      if (selectedOption === "Find Shortest Distance" && response.data.data) {
+        message += `\nDistance is ${response.data.data.distance}`;
+        const pathNodes = response.data.data.nodes.map((node) => node.num).join(" -> ");
+        message += `\nPath Nodes: ${pathNodes}`;
+      } else if (
+        selectedOption === "Find Nodes connected to a node" ||
+        selectedOption === "Find Nodes connected from a node" ||
+        selectedOption === "Common Neighbors"
+      ) {
+        if (response.data.data) {
+          const nums = response.data.data.nodes.map((node) => node.num).join(", ");
+          message += `\nNodes: ${nums}`;
         }
-      ]
-    }
-  ],
-  "Global Memory": 59696,
-  "Total DB Hits": 982,
-  "Total Page Cache Hits": 8,
-  "Total Page Cache Misses": 0
-}
+      } else if (selectedOption === "All Shortest Paths" && response.data.data) {
+        message += `\nDistance : ${response.data.data.paths[0].distance}`;
+        response.data.data.paths.forEach((path, index) => {
+          const pathNodes = path.nodes.map((node) => node.num).join(" -> ");
+          message += `\nPath ${index + 1}: ${pathNodes}`;
+        });
+      } else if (selectedOption === "Fetch All Movies" && response.data.data) {
+        message += `\nMovies:\n`;
+        response.data.data.forEach((movie) => {
+          message += `- ${movie.title} (Released: ${movie.released}, Tagline: ${movie.tagline})\n`;
+        });
+      } else if (selectedOption === "Fetch Movie Details" && response.data.data) {
+        const movie = response.data.data;
+        message += `\nMovie Details:\nTitle: ${movie.title}\nReleased: ${movie.released}\nTagline: ${movie.tagline}\nPeople:\n`;
+        movie.people.forEach((person) => {
+          message += `- ${person.name} (${person.born}) - ${person.relationship}`;
+          if (person.roles && person.roles.length > 0) {
+            message += ` [Roles: ${person.roles.join(", ")}]`;
+          }
+          message += "\n";
+        });
+      } else if (selectedOption === "Fetch People in Movies" && response.data.data) {
+        const person = response.data.data;
+        message += `\nPerson Details:\nName: ${person.name}\nBorn: ${person.born}\nMovies:\n`;
+        person.movies.forEach((movie) => {
+          message += `- ${movie.title} (Released: ${movie.released}, Relationship: ${movie.relationship}`;
+          if (movie.roles && movie.roles.length > 0) {
+            message += `, Roles: ${movie.roles.join(", ")}`;
+          }
+          message += ")\n";
+        });
+      } else if (selectedOption === "Find Co-actors" && response.data.data) {
+        message += `\nCo-actors:\n`;
+        response.data.data.forEach((coActor) => {
+          message += `- ${coActor.coActor} (Movies: ${coActor.movies.join(", ")})\n`;
+        });
+      } else if (selectedOption === "Find Frequent Collaborators" && response.data.data) {
+        message += `\nFrequent Collaborators:\n`;
+        response.data.data.forEach((collab) => {
+          message += `- Actor: ${collab.actor}, Director: ${collab.director}, Collaborations: ${collab.collaborations}\n`;
+        });
+      } else if (selectedOption === "Find Actors Who Haven’t Worked Together" && response.data.data) {
+        message += `\nActors Who Haven’t Worked Together:\n`;
+        response.data.data.forEach((pair) => {
+          message += `- ${pair.actor1} and ${pair.actor2}\n`;
+        });
+      } else if (selectedOption === "Find Actors Who Debuted in a Specific Year" && response.data.data) {
+        message += `\nActors Who Debuted in ${inputValue}:\n`;
+        response.data.data.forEach((actor) => {
+          message += `- ${actor.actor} (Movies: ${actor.movies.join(", ")})\n`;
+        });
+      } else if (selectedOption === "Find Most Connected Movie" && response.data.data) {
+        message += `\nMost Connected Movie:\n${response.data.data.movie} with ${response.data.data.connections} connections.`;
+      } else if (selectedOption === "Find Sequels/Prequels of a Movie" && response.data.data) {
+        message += `\nSequels/Prequels:\n`;
+        response.data.data.forEach((related) => {
+          message += `- ${related.relatedMovie} (${related.relationship})\n`;
+        });
+      } else if (selectedOption === "Find Movies with Actor + Director Combo" && response.data.data) {
+        message += `\nMovies with Actor '${startNode}' and Director '${endNode}':\n${response.data.data.join(", ")}`;
+      } else if (selectedOption === "Find Shortest Path Between Two Actors" && response.data.data) {
+        message += `\nShortest Path:\nDistance: ${response.data.data.distance}\nPath: ${response.data.data.path}`;
+      } else if (selectedOption === "Find All Movies Directed by a Person" && response.data.data) {
+        message += `\nMovies Directed by '${inputValue}':\n`;
+        response.data.data.forEach((movie) => {
+          message += `- ${movie.title} (Released: ${movie.released}, Tagline: ${movie.tagline})\n`;
+        });
+      } else if (selectedOption === "Find Directors Who Worked with a Specific Actor" && response.data.data) {
+        message += `\nDirectors Who Worked with '${inputValue}':\n`;
+        response.data.data.forEach((director) => {
+          message += `- ${director.director} (Movies: ${director.movies.join(", ")})\n`;
+        });
+      } else if (selectedOption === "Find Producers with Most Movies Produced" && response.data.data) {
+        message += `\nTop Producers:\n`;
+        response.data.data.forEach((producer) => {
+          message += `- ${producer.producer} (Movies Produced: ${producer.movieCount})\n`;
+        });
+      } else if (selectedOption === "Find Most Central Actor" && response.data.data) {
+        message += `\nMost Central Actor:\n${response.data.data.actor} with a centrality score of ${response.data.data.score}.`;
+      } else if (selectedOption === "Find Clusters or Communities of Actors" && response.data.data) {
+        message += `\nClusters of Actors:\n`;
+        Object.entries(response.data.data).forEach(([community, actors]) => {
+          message += `Community ${community}: ${actors.join(", ")}\n`;
+        });
+      } else if (selectedOption === "Find Isolated Nodes" && response.data.data) {
+        message += `\nIsolated Nodes:\n`;
+        response.data.data.forEach((node) => {
+          message += `- ${node.name} (Labels: ${node.labels.join(", ")})\n`;
+        });
+      }
+
+      setOutput(message); // Set the response message
+      setProfileOutput(JSON.stringify(response.data.profile, null, 2)); // Set the query profile
+    })
+    .catch((error) => {
+      console.error("Error submitting data:", error);
+      setOutput("Failed to process the request.");
+    });
+};
