@@ -522,6 +522,7 @@ def find_all_movies_directed_by_person(session, director_name):
     RETURN m.title AS movie, m.released AS released, m.tagline AS tagline
     """
     result, profile = execute_query_with_profile(session, query)
+    print(result)
     movies = [
         {"title": record["movie"], "released": record["released"], "tagline": record["tagline"]}
         for record in result
@@ -578,24 +579,46 @@ def find_shortest_path_between_actors(session, actor1, actor2):
     """Find the shortest path between two actors."""
     query = f"""
     MATCH path = shortestPath((a:Person {{name: '{actor1}'}})-[*]-(b:Person {{name: '{actor2}'}}))
-    RETURN path, length(path) AS distance
+    RETURN path, length(path) AS distance, nodes(path) AS pathNodes, relationships(path) AS pathEdges
     """
     result, profile = execute_query_with_profile(session, query)
     record = result[0] if result else None
     if not record:
         return {"message": f"No path found between '{actor1}' and '{actor2}'.", "profile": profile}
+
+    # Extract nodes and relationships from the path
+    nodes_in_path = record["pathNodes"]
+    edges_in_path = record["pathEdges"]
+
+    # Format nodes
+    nodes = [
+        {"name": node.get("name"), "title":node.get("title"),"labels": list(node.labels),}
+        for node in nodes_in_path
+    ]
+
+    # Format edges
+    edges = [
+        {"source": rel.start_node.get("name"), "target": rel.end_node.get("name"), "type": rel.type}
+        for rel in edges_in_path
+    ]
+
     return {
         "message": f"Shortest path between '{actor1}' and '{actor2}' found.",
-        "data": {"distance": record["distance"], "path": record["path"]},
+        "data": {
+            "distance": record["distance"],
+            "path": {
+                "nodes": nodes,
+                "edges": edges
+            }
+        },
         "profile": profile,
     }
 
 def find_most_central_actor(session):
     """Find the most central actor using graph centrality."""
     query = """
-    CALL algo.degree.stream('Person', 'ACTED_IN', {direction: 'both'})
-    YIELD nodeId, score
-    RETURN algo.asNode(nodeId).name AS actor, score
+    MATCH (p:Person)-[:ACTED_IN]-()
+    RETURN p.name AS actor, count(*) AS score
     ORDER BY score DESC
     LIMIT 1
     """

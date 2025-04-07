@@ -32,7 +32,9 @@ function App() {
       selectedOption === "Fetch People in Movies" ||
       selectedOption === "Find Co-actors" ||
       selectedOption === "Find Sequels/Prequels of a Movie" ||
-      selectedOption === "Find Actors Who Debuted in a Specific Year"
+      selectedOption === "Find Actors Who Debuted in a Specific Year" ||
+      selectedOption === "Find Directors Who Worked with a Specific Actor" ||
+      selectedOption === "Find All Movies Directed by a Person"
     ) {
       params.inputValue = inputValue;
     }
@@ -122,8 +124,47 @@ function App() {
         } else if (selectedOption === "Find Movies with Actor + Director Combo" && response.data.data) {
           message += `\nMovies with Actor '${startNode}' and Director '${endNode}':\n${response.data.data.join(", ")}`;
         } else if (selectedOption === "Find Shortest Path Between Two Actors" && response.data.data) {
-          message += `\nShortest Path:\nDistance: ${response.data.data.distance}\nPath: ${response.data.data.path}`;
+          message += `\nShortest Path:\nDistance: ${response.data.data.distance}`;
+        
+          // Check if path and nodes exist
+          if (response.data.data.path && response.data.data.path.nodes) {
+            const pathNodes = response.data.data.path.nodes.map((node) => node.name || node.title || "unknown").join(" -> ");
+            message += `\nPath Nodes: ${pathNodes}`;
+          } else {
+            message += `\nPath Nodes: Path data is unavailable or in an unexpected format.`;
+          }
+        
+          // Check if edges exist
+          if (response.data.data.path && response.data.data.path.edges) {
+            const pathEdges = response.data.data.path.edges.map((edge) => `${edge.source} -> ${edge.target} (${edge.type})`).join("\n");
+            message += `\nPath Edges:\n${pathEdges}`;
+          } else {
+            message += `\nPath Edges: Edge data is unavailable or in an unexpected format.`;
+          }
+        } else if (selectedOption === "Find Directors Who Worked with a Specific Actor" && response.data.data) {
+          message += `\nDirectors Who Worked with '${inputValue}':\n`;
+          response.data.data.forEach((director) => {
+            message += `- ${director.director} (Movies: ${director.movies.join(", ")})\n`;
+          });
+        } else if (selectedOption === "Find Producers with Most Movies Produced" && response.data.data) {
+          message += `\nTop Producers:\n`;
+          response.data.data.forEach((producer) => {
+            message += `- ${producer.producer} (Movies Produced: ${producer.movieCount})\n`;
+          });
+        } else if (selectedOption === "Find Most Central Actor" && response.data.data) {
+          message += `\nMost Central Actor:\n${response.data.data.actor} with a centrality score of ${response.data.data.score}.`;
+        } else if (selectedOption === "Find Clusters or Communities of Actors" && response.data.data) {
+          message += `\nClusters of Actors:\n`;
+          Object.entries(response.data.data).forEach(([community, actors]) => {
+            message += `Community ${community}: ${actors.join(", ")}\n`;
+          });
+        } else if (selectedOption === "Find Isolated Nodes" && response.data.data) {
+          message += `\nIsolated Nodes:\n`;
+          response.data.data.forEach((node) => {
+            message += `- ${node.name} (Labels: ${node.labels.join(", ")})\n`;
+          });
         }
+
 
         setOutput(message); // Set the response message
         setProfileOutput(JSON.stringify(response.data.profile, null, 2)); // Set the query profile
