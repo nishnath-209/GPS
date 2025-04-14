@@ -191,7 +191,12 @@ const GraphQueryInterface = ({ graphResponse }) => {
             },
             {
               selector: "edge",
-              style: { "line-color": "#ccc" }
+              style: { "line-color": "#ccc" ,
+                  "target-arrow-color": "#ccc",
+                "target-arrow-shape": "triangle",
+                "curve-style": "bezier"
+
+              }
             },
             {
               selector: ".highlighted-path",
