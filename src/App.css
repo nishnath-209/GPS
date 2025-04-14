@@ -47,6 +47,17 @@
   padding-left: 10px;
 }
 
+.selected-option {
+  font-size: 18px;
+  font-weight: 600;
+  color: #222;
+  margin-bottom: 10px;
+  padding: 6px 12px;
+  background-color: #e2e6ea;
+  border-radius: 4px;
+}
+
+
 .left-panel ul {
   list-style: none;
   padding: 0;

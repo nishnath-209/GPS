@@ -71,8 +71,8 @@ function App() {
                   selectedOption === "Find Nodes connected from a node" || 
                   selectedOption === "Common Neighbors" ||
                   selectedOption === "Triangles Containing Node") {
-            const nums = response.data.data.nodes?.map((node) => node.num).join(", ") || "";
-            message += `\nNodes: ${nums}`;
+            const nums = response.data.data.combined.nodes?.map((node) => node.num).join(", ") || "";
+            message += `\nNodes: ${nums}`;  
           } 
           else if (selectedOption === "All Shortest Paths") {
             message += `\nDistance: ${response.data.data.paths[0].distance}`;
@@ -106,7 +106,7 @@ function App() {
             const pathNodes = path.nodes.map((node) => node.num).join(" -> ");
             message += `\nPath ${index + 1}: ${pathNodes}`;
           });
-        } else if (selectedOption === "Fetch All Movies" && response.data.data) {
+        } else if ((selectedOption === "Fetch All Movies" || selectedOption === "Find All Movies Directed by a Person") && response.data.data) {
           message += `\nMovies:\n`;
           response.data.data.forEach((movie) => {
             message += `- ${movie.title} (Released: ${movie.released}, Tagline: ${movie.tagline})\n`;
@@ -225,9 +225,11 @@ function App() {
                    "Find no of Nodes", 
                    "Find Nodes connected from a node", 
                    "Common Neighbors",
-                   "K-length Paths",
-                   "Triangles Containing Node"].includes(selectedOption)) {
+                   "K-length Paths"].includes(selectedOption)) {
             setGraphResponse(response.data.data);
+          }
+          else if(selectedOption === "Triangles Containing Node" || selectedOption === "Triangle Count"){
+            setGraphResponse(response.data.data.combined);
           }
         }
       })
@@ -656,8 +658,8 @@ function App() {
   return (
     <div className="App">
       <header className="app-header">
-        <button onClick={() => setSelectedPage("General")}>General</button>
-        <button onClick={() => setSelectedPage("Movie database")}>
+        <button onClick={() => {setSelectedPage("General");setOutput(""); setProfileOutput("");setSelectedOption("") }}>General</button>
+        <button onClick={() => {setSelectedPage("Movie database");setOutput(""); setProfileOutput("");setSelectedOption("")}}>
           Movie database
         </button>
         <button onClick={() => setSelectedPage("Social Network")}>
@@ -669,6 +671,7 @@ function App() {
           <div className="left-panel">
             {renderMovieDatabaseOptions()}
             <div className="input-container">
+            {selectedOption && <div className="selected-option">{selectedOption}</div>}
               {renderMovieDatabaseInputFields()}
               {output && (
                 <div className="output-container">
@@ -688,6 +691,7 @@ function App() {
           <div className="left-panel">
             {renderGeneralOptions()}
             <div className="input-container">
+            {selectedOption && <div className="selected-option">{selectedOption}</div>}
               {renderInputFields()}
               {output && (
                 <div className="output-container">

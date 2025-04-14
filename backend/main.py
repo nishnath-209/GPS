@@ -401,13 +401,71 @@ def find_k_length_paths(session, startNode, endNode, k):
 def count_triangles(session):
     query = """
     MATCH (a)-[:CONNECTS]->(b)-[:CONNECTS]->(c)-[:CONNECTS]->(a)
-    RETURN count(DISTINCT [a, b, c]) AS triangle_count
+    RETURN DISTINCT a.num AS a, b.num AS b, c.num AS c, 
+       [(a)-[r1:CONNECTS]->(b) | r1] AS edgesAB,
+       [(b)-[r2:CONNECTS]->(c) | r2] AS edgesBC,
+       [(c)-[r3:CONNECTS]->(a) | r3] AS edgesCA
     """
     result, profile = execute_query_with_profile(session, query)
-    count = result[0]["triangle_count"] if result else 0
+    triangles = []
+    combined_nodes = {}
+    combined_edges = []
+
+    for record in result:
+        # Collect the nodes using their num attribute
+        nodes = [
+            {"num": record["a"]},
+            {"num": record["b"]},
+            {"num": record["c"]}
+        ]
+
+        # Collect the edges using pattern comprehensions
+        edges = []
+        edges.extend([{
+            "source": str(edge.start_node.id),
+            "target": str(edge.end_node.id),
+            "type": edge.type,
+            "id": str(edge.id)
+        } for edge in record["edgesAB"]])
+        edges.extend([{
+            "source": str(edge.start_node.id),
+            "target": str(edge.end_node.id),
+            "type": edge.type,
+            "id": str(edge.id)
+        } for edge in record["edgesBC"]])
+        edges.extend([{
+            "source": str(edge.start_node.id),
+            "target": str(edge.end_node.id),
+            "type": edge.type,
+            "id": str(edge.id)
+        } for edge in record["edgesCA"]])
+
+        # Add the nodes to the combined list (ensure unique nodes)
+        for node in nodes:
+            combined_nodes[node["num"]] = node
+
+        # Add the edges to the combined list
+        combined_edges.extend(edges)
+
+        # Add the triangle details
+        triangles.append({
+            "nodes": nodes,
+            "edges": edges
+        })
+
+    # Count the number of triangles
+    count = len(triangles)
+
     return {
         "message": f"Total triangles in graph: {count}",
-        "data": {"count": count},
+        "data": {
+            "count": count,
+            "triangles": triangles,
+            "combined": {
+                "nodes": list(combined_nodes.values()),
+                "edges": combined_edges
+            }
+        },
         "profile": profile
     }
 
@@ -415,15 +473,64 @@ def find_node_triangles(session, node_id):
     query = f"""
     MATCH (a)-[:CONNECTS]->(b)-[:CONNECTS]->(c)-[:CONNECTS]->(a)
     WHERE a.num = {node_id} OR b.num = {node_id} OR c.num = {node_id}
-    RETURN DISTINCT a.num AS a, b.num AS b, c.num AS c
+    RETURN DISTINCT a.num AS a, b.num AS b, c.num AS c, 
+       [(a)-[r1:CONNECTS]->(b) | r1] AS edgesAB,
+       [(b)-[r2:CONNECTS]->(c) | r2] AS edgesBC,
+       [(c)-[r3:CONNECTS]->(a) | r3] AS edgesCA
     """
     result, profile = execute_query_with_profile(session, query)
-    triangles = [{"nodes": [record["a"], record["b"], record["c"]]} for record in result]
+    triangles = []
+    combined_nodes = {}
+    combined_edges = []
+
+    for record in result:
+        # Collect the nodes using their num attribute
+        nodes = [
+            {"num": record["a"]},
+            {"num": record["b"]},
+            {"num": record["c"]}
+        ]
+
+        # Collect the edges
+        edges = []
+        edges.extend(record["edgesAB"])
+        edges.extend(record["edgesBC"])
+        edges.extend(record["edgesCA"])
+
+        # Add the nodes to the combined list (ensure unique nodes)
+        for node in nodes:
+            combined_nodes[node["num"]] = node
+
+        # Add the edges to the combined list
+        for edge in edges:
+            combined_edges.append({
+                "source": str(edge.start_node.id),
+                "target": str(edge.end_node.id),
+                "type": edge.type,
+                "id": str(edge.id)
+            })
+
+        # Add the triangle details
+        triangles.append({
+            "nodes": nodes,
+            "edges": edges
+        })
+
+    if not triangles:
+        return {"message": "No triangles found.", "data": None, "profile": profile}
+
     return {
         "message": f"Found {len(triangles)} triangles containing node {node_id}",
-        "data": triangles,
+        "data": {
+            "triangles": triangles,
+            "combined": {
+                "nodes": list(combined_nodes.values()),
+                "edges": combined_edges
+            }
+        },
         "profile": profile
     }
+
 
 def calculate_clustering_coefficient(session, node_id):
     # Get triangles count
@@ -463,7 +570,7 @@ def detect_communities(session):
         
         for _ in range(5):
             session.run("""
-            MATCH (n)-[:CONNECTS]-(neighbor)
+            MATCH (n)-[:CONNECTS]->(neighbor)
             WITH n, neighbor.community AS neighborCommunity, count(*) AS communityCount
             ORDER BY communityCount DESC
             WITH n, collect(neighborCommunity)[0] AS newCommunity
@@ -555,6 +662,8 @@ def calculate_centrality(session):
         }
     except Exception as e:
         return {"error": f"Centrality calculation failed: {str(e)}"}
+    
+
 def fetch_all_movies(session):
     """Fetch all movies with their details."""
     query = """
