@@ -69,11 +69,15 @@ function App() {
           }
           else if (selectedOption === "Find Nodes connected to a node" || 
                   selectedOption === "Find Nodes connected from a node" || 
-                  selectedOption === "Common Neighbors" ||
-                  selectedOption === "Triangles Containing Node") {
-            const nums = response.data.data.combined.nodes?.map((node) => node.num).join(", ") || "";
+                  selectedOption === "Common Neighbors"
+                  ) {
+            const nums = response.data.data.nodes?.map((node) => node.num).join(", ") || "";
             message += `\nNodes: ${nums}`;  
           } 
+          else if(selectedOption === "Triangles Containing Node"){
+            const nums = response.data.data.combined.nodes?.map((node) => node.num).join(", ") || "";
+            message += `\nNodes: ${nums}`;  
+          }
           else if (selectedOption === "All Shortest Paths") {
             message += `\nDistance: ${response.data.data.paths[0].distance}`;
             response.data.data.paths.forEach((path, index) => {
